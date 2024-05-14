@@ -5,7 +5,7 @@ const GRAVITY = 2;
 export class Player {
     constructor(scene) {
         this.x = 0;
-        this.y = GAME_HEIGHT - 100;
+        this.y = 0;
         this.width = 32;
         this.height = 150;
         this.color = 'red';
@@ -44,12 +44,28 @@ export class Player {
         this.y = this.y + this.velocity.y;
         this.x += this.velocity.x;
         
-        const collisionRect = this.scene.collidesWith(this)
-        if (!collisionRect) this.velocity.y += GRAVITY;
-        else {
-            this.y = collisionRect.y - this.height;
-            this.velocity.y = 0;
+        const collidingTerrain = this.scene.terrain.filter((terrain)=> (terrain.collidesWith(this)));
+
+        if (!collidingTerrain.some(terrain => terrain.collidesWithSide(this) === 'top')) {
+            this.velocity.y += GRAVITY;
         }
+
+        collidingTerrain.forEach((terrain) => {
+            switch (terrain.collidesWithSide(this)) {
+                case 'bottom':
+                    this.y = terrain.y - this.height;
+                    this.velocity.y = 0;
+                    break;
+                case 'left':
+                    this.x = terrain.x + terrain.width;
+                    if (this.velocity.x < 0) this.velocity.x = 0;
+                    break;
+                case 'right':
+                    this.x = terrain.x - this.width;
+                    if (this.velocity.x > 0) this.velocity.x = 0;
+                    break;
+            }
+        });
     }
 
     addEvents() {
